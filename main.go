@@ -8,16 +8,18 @@ import (
 	"strconv"
 )
 
+// The default port on which our application will run
 const port = 4242
 
+// Number of concurrent clients which are connected right now
+var concurrent_clients uint8 = 0
+
 func main() {
-	// For TCP, UDP and IP networks, if the host is empty or a literal unspecified IP address, as in ":80",
-	//  "0.0.0.0:80" or "[::]:80" for TCP and UDP, "", "0.0.0.0" or "::" for IP, the local system is assumed.
-	
-	listener, err := net.Listen("tcp", ":" + strconv.Itoa(port))
+
+	// Listen for tcp connections on the port
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 
 	if err != nil {
-		fmt.Println(err)
 		log.Fatal("Could not listen on port", port)
 	}
 
@@ -26,38 +28,45 @@ func main() {
 
 	fmt.Println("Server started successfully.")
 	fmt.Println("Listening on port", port)
-	
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			// handle error
+			fmt.Println("Could not accept connection from a client.")
 		}
+
+		concurrent_clients += 1
+		// Launch a goroutine to handle the connection
 		go handleConnection(conn)
 	}
 
 }
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	
+	// No matter how we end up handling this connection, always close the connection and decrease number of clients
+	defer func() {
+		conn.Close()
+		concurrent_clients -= 1
+		fmt.Println("Connection closed by client: ", conn.RemoteAddr().String())
+		fmt.Println("Concurrent clients: ", concurrent_clients)
+	}()
+
 	fmt.Println("Connection established by client: ", conn.RemoteAddr().String())
+	fmt.Println("Concurrent clients: ", concurrent_clients)
 
 	for {
 		data := make([]byte, 128)
 		_, err := conn.Read(data)
-		
+
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("Connection closed by client: ", conn.RemoteAddr().String())
-				return
+				break
 			}
 		}
-		
+
 		fmt.Println("Received: ", string(data))
-		
 		conn.Write(data)
 		fmt.Println("Echoed data back: ", string(data))
 	}
-	
 
 }
