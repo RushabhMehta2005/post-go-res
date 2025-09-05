@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"strconv"
+	"strings"
 )
 
 // The default port on which our application will run
@@ -13,6 +14,9 @@ const port = 4242
 
 // Number of concurrent clients which are connected right now
 var concurrent_clients uint8 = 0
+
+// In memory map to store the actual key-value pair data
+var store map[string]string = make(map[string]string, 32)
 
 func main() {
 
@@ -36,7 +40,7 @@ func main() {
 		}
 
 		concurrent_clients += 1
-		// Launch a goroutine to handle the connection
+		// Launch a goroutine to handle the connection, allowing main loop to accept more connections
 		go handleConnection(conn)
 	}
 
@@ -54,19 +58,32 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Connection established by client: ", conn.RemoteAddr().String())
 	fmt.Println("Concurrent clients: ", concurrent_clients)
 
+	scanner := bufio.NewScanner(conn)
 	for {
-		data := make([]byte, 128)
-		_, err := conn.Read(data)
-
-		if err != nil {
-			if err == io.EOF {
-				break
+		next := scanner.Scan()
+		if next {
+			cmd_raw_string := scanner.Text()
+			cmd_fields := strings.Fields(cmd_raw_string)
+			switch cmd_fields[0] {
+			case "SET": // length better be 3
+				store[cmd_fields[1]] = cmd_fields[2]
+				conn.Write([]byte("SET OK: Wrote value of " + cmd_fields[1] + " as " + cmd_fields[2] + "\n"))
+			case "GET": // length better be 2
+				val, ok := store[cmd_fields[1]]
+				if ok {
+					conn.Write([]byte("GET OK: Got value of " + cmd_fields[1] + " as " + val + "\n"))
+				} else {
+					conn.Write([]byte("GET NOT OK: Did not find " + cmd_fields[1] + " in store" + "\n"))
+				}
+			default:
+				conn.Write([]byte("INVALID COMMAND" + "\n"))
 			}
-		}
 
-		fmt.Println("Received: ", string(data))
-		conn.Write(data)
-		fmt.Println("Echoed data back: ", string(data))
+			// Only to see
+			fmt.Println(store)
+		} else {
+			break
+		}
 	}
 
 }
