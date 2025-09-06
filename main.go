@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
 )
 
 // The default port on which our application will run
@@ -16,7 +17,8 @@ const port = 4242
 var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
-var store map[string]string = make(map[string]string, 32)
+// TODO: fix why is this not working at all?
+var store = memstore.InMemStore{}
 
 func main() {
 
@@ -80,8 +82,7 @@ func handleConnection(conn net.Conn) {
 				case 2:
 					writer.WriteString("SET NOT OK: No value provided\n")
 				case 3:
-					// Happy flow
-					store[cmd_fields[1]] = cmd_fields[2]
+					store.Set(cmd_fields[1], cmd_fields[2])
 					writer.WriteString("SET OK: Wrote value of " + cmd_fields[1] + " as " + cmd_fields[2] + "\n")
 				default:
 					writer.WriteString("SET NOT OK: Invalid arguments\n")
@@ -91,7 +92,7 @@ func handleConnection(conn net.Conn) {
 				case 1:
 					writer.WriteString("GET NOT OK: No key provided\n")
 				case 2:
-					val, found := store[cmd_fields[1]]
+					val, found := store.Get(cmd_fields[1])
 					if found {
 						writer.WriteString("GET OK: Got value of " + cmd_fields[1] + " as " + val + "\n")
 					} else {
