@@ -2,7 +2,7 @@ package store
 
 import "sync"
 
-// The 'Store' struct implements a thread safe map
+// The 'InMemStore' struct implements a thread safe map
 type InMemStore struct {
 	rwMutex sync.RWMutex
 	data    map[string]string
