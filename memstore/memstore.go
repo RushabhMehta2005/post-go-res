@@ -5,14 +5,16 @@ import "sync"
 // The 'Store' struct implements a thread safe map
 type InMemStore struct {
 	rwMutex sync.RWMutex
-	data map[string]string
+	data    map[string]string
 }
 
-// Set key to value in map
-func (s *InMemStore) Set(key, value string) {
-	s.rwMutex.Lock()
-	s.data[key] = value
-	s.rwMutex.Unlock()
+// "Constructor" function to return new instance of InMemStore
+// Currently the size is fixed to 32
+// TODO: Make this configurable through cmd line flag
+func NewInMemStore() *InMemStore {
+	return &InMemStore{
+		data: make(map[string]string, 32),
+	}
 }
 
 // Gets value from map given the key.
@@ -22,4 +24,11 @@ func (s *InMemStore) Get(key string) (string, bool) {
 	val, found := s.data[key]
 	s.rwMutex.RUnlock()
 	return val, found
+}
+
+// Set key to value in map
+func (s *InMemStore) Set(key, value string) {
+	s.rwMutex.Lock()
+	s.data[key] = value
+	s.rwMutex.Unlock()
 }

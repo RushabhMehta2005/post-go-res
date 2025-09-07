@@ -3,11 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
 	"log"
 	"net"
 	"strconv"
 	"strings"
-	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
 )
 
 // The default port on which our application will run
@@ -17,8 +17,7 @@ const port = 4242
 var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
-// TODO: fix why is this not working at all?
-var store = memstore.InMemStore{}
+var store = memstore.NewInMemStore()
 
 func main() {
 
@@ -109,8 +108,8 @@ func handleConnection(conn net.Conn) {
 				fmt.Println("Could not flush data to client: ", conn.RemoteAddr())
 			}
 
-			// Only to see
-			fmt.Println(store)
+			// Only to test working
+			// fmt.Println(store.Data)
 		} else {
 			break
 		}
