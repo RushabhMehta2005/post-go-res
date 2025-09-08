@@ -14,10 +14,16 @@ import (
 const port = 4242
 
 // Number of concurrent clients which are connected right now
+// TODO: Make this variable thread-safe
 var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
 var store = memstore.NewInMemStore()
+
+
+// TODO: Write client library code to interact with our server as well
+// TODO: Make data persistent by means of Write-Ahead Logging (WAL)
+// TODO: Add checkpointing to WAL
 
 func main() {
 
@@ -51,6 +57,7 @@ func handleConnection(conn net.Conn) {
 	// No matter how we end up handling this connection, always close the connection and decrease number of clients
 	defer func() {
 		conn.Close()
+		// Possible race on concurrent_clients
 		concurrent_clients -= 1
 		fmt.Println("Connection closed by client: ", conn.RemoteAddr().String())
 		fmt.Println("Concurrent clients: ", concurrent_clients)
