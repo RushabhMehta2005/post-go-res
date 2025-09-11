@@ -18,8 +18,7 @@ const port = 4242
 var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
-var store = memstore.NewInMemStore()
-
+var store = memstore.NewHashMap()
 
 // TODO: Write client library code to interact with our server as well
 // TODO: Make data persistent by means of Write-Ahead Logging (WAL)
