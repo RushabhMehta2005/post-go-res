@@ -2,24 +2,25 @@ package store
 
 import "sync"
 
-// The 'InMemStore' struct implements a thread safe map
-type InMemStore struct {
+// The 'HashMap' struct implements a thread safe in memory store using
+// the map data structure in Go
+type HashMap struct {
 	rwMutex sync.RWMutex
 	data    map[string]string
 }
 
-// "Constructor" function to return new instance of InMemStore
+// "Constructor" function to return new instance of HashMap
 // Currently the size is fixed to 32
 // TODO: Make this configurable through cmd line flag
-func NewInMemStore() *InMemStore {
-	return &InMemStore{
+func NewHashMap() *HashMap {
+	return &HashMap{
 		data: make(map[string]string, 32),
 	}
 }
 
 // Gets value from map given the key.
 // If key does not exist in map, false is returned alongside the empty string
-func (s *InMemStore) Get(key string) (string, bool) {
+func (s *HashMap) Get(key string) (string, bool) {
 	s.rwMutex.RLock()
 	val, found := s.data[key]
 	s.rwMutex.RUnlock()
@@ -27,7 +28,7 @@ func (s *InMemStore) Get(key string) (string, bool) {
 }
 
 // Set key to value in map
-func (s *InMemStore) Set(key, value string) {
+func (s *HashMap) Set(key, value string) {
 	s.rwMutex.Lock()
 	s.data[key] = value
 	s.rwMutex.Unlock()
