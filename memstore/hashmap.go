@@ -22,14 +22,14 @@ func NewHashMap() *HashMap {
 // If key does not exist in map, false is returned alongside the empty string
 func (s *HashMap) Get(key string) (string, bool) {
 	s.rwMutex.RLock()
+	defer s.rwMutex.RUnlock()
 	val, found := s.data[key]
-	s.rwMutex.RUnlock()
 	return val, found
 }
 
 // Set key to value in map
 func (s *HashMap) Set(key, value string) {
 	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
 	s.data[key] = value
-	s.rwMutex.Unlock()
 }
