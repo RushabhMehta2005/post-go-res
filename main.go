@@ -3,11 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
 	"log"
 	"net"
 	"strconv"
 	"strings"
+
+	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
+	"github.com/RushabhMehta2005/post-go-res/wal"
 )
 
 // The default port on which our application will run
@@ -19,6 +21,10 @@ var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
 var store = memstore.NewHashMap()
+
+// Instance of WAL
+const WAL_FILE_PATH = "./wal_files/wal_file"
+var walWriter, err = wal.NewWAL(WAL_FILE_PATH)
 
 // TODO: Write client library code to interact with our server as well
 // TODO: Make data persistent by means of Write-Ahead Logging (WAL)
@@ -88,6 +94,7 @@ func handleConnection(conn net.Conn) {
 				case 2:
 					writer.WriteString("SET NOT OK: No value provided\n")
 				case 3:
+					walWriter.Log(cmd_fields[0], cmd_fields[1], cmd_fields[2])
 					store.Set(cmd_fields[1], cmd_fields[2])
 					writer.WriteString("SET OK: Wrote value of " + cmd_fields[1] + " as " + cmd_fields[2] + "\n")
 				default:
@@ -115,8 +122,6 @@ func handleConnection(conn net.Conn) {
 				fmt.Println("Could not flush data to client: ", conn.RemoteAddr())
 			}
 
-			// Only to test working
-			// fmt.Println(store.Data)
 		} else {
 			break
 		}
