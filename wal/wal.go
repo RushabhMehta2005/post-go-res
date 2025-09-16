@@ -12,6 +12,8 @@ import (
 	"github.com/RushabhMehta2005/post-go-res/memstore"
 )
 
+// TODO: Improve error handling here, decide who should handle the error and where
+
 // This file contains the internal implementation
 // of the Write-Ahead Logging API
 
@@ -37,7 +39,7 @@ func (w *WAL) Log(operation, key, value string) {
 	logEntry := strconv.Itoa(len(operation)) + operation + strconv.Itoa(len(key)) + key + strconv.Itoa(len(value)) + value + "\n"
 	logEntryBytes := []byte(logEntry)
 	w.logFile.Write(logEntryBytes)
-	// Flush the log to disk to ensure durability
+	// Flush the log to disk to ensure durability, this is disk IO and it is expensive
 	if err := w.logFile.Sync(); err != nil {
 		panic(err)
 	}
