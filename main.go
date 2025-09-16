@@ -6,9 +6,10 @@ import (
 	"github.com/RushabhMehta2005/post-go-res/wal"
 )
 
-// TODO: Write client library code to interact with our server as well
-// TODO: Add checkpointing to WAL
-// TODO: Implement new improved open-addressed hash table
+// TODO: Write client library code to interact with our db, multiple programming languages
+// TODO: Implement new improved open-addressed hash table, maybe?
+// TODO: Add cmd line flags to set port, wal file location, hashmap initial size, etc params
+// TODO: Add compaction to WAL
 
 func main() {
 	// In memory map to store the actual key-value pair data
