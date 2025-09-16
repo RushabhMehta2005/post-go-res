@@ -27,7 +27,6 @@ const WAL_FILE_PATH = "./wal_files/wal_file"
 var walWriter, err = wal.NewWAL(WAL_FILE_PATH)
 
 // TODO: Write client library code to interact with our server as well
-// TODO: Make data persistent by means of Write-Ahead Logging (WAL)
 // TODO: Add checkpointing to WAL
 // TODO: Implement new improved open-addressed hash table
 
