@@ -1,9 +1,15 @@
 package wal
 
 import (
+	"bufio"
+	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"sync"
+	"unicode"
+
+	"github.com/RushabhMehta2005/post-go-res/memstore"
 )
 
 // This file contains the internal implementation
@@ -35,4 +41,72 @@ func (w *WAL) Log(operation, key, value string) {
 	if err := w.logFile.Sync(); err != nil {
 		panic(err)
 	}
+}
+
+func (w *WAL) ReBuild(store store.InMemStore) {
+	scanner := bufio.NewScanner(w.logFile)
+
+	// Iterate through the lines
+	for scanner.Scan() {
+		line := scanner.Text()
+		// operation does not matter for now
+		_, key, value, err := parseLine(line)
+		if err != nil {
+			log.Fatal(err)
+		}
+		store.Set(key, value)
+	}	
+}
+
+func parseLine(line string) (operation, key, value string, err error) {
+	readLen := func(s string, i *int) (int, error) {
+		start := *i
+		for *i < len(s) && unicode.IsDigit(rune(s[*i])) {
+			*i++
+		}
+		if start == *i {
+			return 0, fmt.Errorf("expected number at position %d", start)
+		}
+		n, err := strconv.Atoi(s[start:*i])
+		if err != nil {
+			return 0, err
+		}
+		return n, nil
+	}
+
+	i := 0
+	// Parse operation
+	opLen, err := readLen(line, &i)
+	if err != nil {
+		return "", "", "", err
+	}
+	if i+opLen > len(line) {
+		return "", "", "", fmt.Errorf("operation length exceeds input")
+	}
+	operation = line[i : i+opLen]
+	i += opLen
+
+	// Parse key
+	keyLen, err := readLen(line, &i)
+	if err != nil {
+		return "", "", "", err
+	}
+	if i+keyLen > len(line) {
+		return "", "", "", fmt.Errorf("key length exceeds input")
+	}
+	key = line[i : i+keyLen]
+	i += keyLen
+
+	// Parse value
+	valueLen, err := readLen(line, &i)
+	if err != nil {
+		return "", "", "", err
+	}
+	if i+valueLen > len(line) {
+		return "", "", "", fmt.Errorf("value length exceeds input")
+	}
+	value = line[i : i+valueLen]
+	i += valueLen
+
+	return operation, key, value, nil
 }

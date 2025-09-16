@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	memstore "github.com/RushabhMehta2005/post-go-res/memstore"
+	"github.com/RushabhMehta2005/post-go-res/memstore"
 	"github.com/RushabhMehta2005/post-go-res/wal"
 )
 
@@ -20,7 +20,7 @@ const port = 4242
 var concurrent_clients uint8 = 0
 
 // In memory map to store the actual key-value pair data
-var store = memstore.NewHashMap()
+var kvstore = store.NewHashMap()
 
 // Instance of WAL
 const WAL_FILE_PATH = "./wal_files/wal_file"
@@ -32,6 +32,8 @@ var walWriter, err = wal.NewWAL(WAL_FILE_PATH)
 // TODO: Implement new improved open-addressed hash table
 
 func main() {
+	// Rebuild the db in memory
+	walWriter.ReBuild(kvstore)
 
 	// Listen for tcp connections on the port
 	listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
@@ -97,7 +99,7 @@ func handleConnection(conn net.Conn) {
 					writer.WriteString("SET NOT OK: No value provided\n")
 				case 3:
 					walWriter.Log(cmd_fields[0], cmd_fields[1], cmd_fields[2])
-					store.Set(cmd_fields[1], cmd_fields[2])
+					kvstore.Set(cmd_fields[1], cmd_fields[2])
 					writer.WriteString("SET OK: Wrote value of " + cmd_fields[1] + " as " + cmd_fields[2] + "\n")
 				default:
 					writer.WriteString("SET NOT OK: Invalid arguments\n")
@@ -107,7 +109,7 @@ func handleConnection(conn net.Conn) {
 				case 1:
 					writer.WriteString("GET NOT OK: No key provided\n")
 				case 2:
-					val, found := store.Get(cmd_fields[1])
+					val, found := kvstore.Get(cmd_fields[1])
 					if found {
 						writer.WriteString("GET OK: Got value of " + cmd_fields[1] + " as " + val + "\n")
 					} else {
