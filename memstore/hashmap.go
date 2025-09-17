@@ -10,7 +10,7 @@ type HashMap struct {
 }
 
 // "Constructor" function to return new instance of HashMap
-// Currently the size is fixed to 32
+// Currently the initial size is fixed to 32
 // TODO: Make this configurable through cmd line flag
 func NewHashMap() *HashMap {
 	return &HashMap{
