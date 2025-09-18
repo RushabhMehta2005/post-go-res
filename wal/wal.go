@@ -19,8 +19,8 @@ import (
 
 type WAL struct {
 	logFilePath string
-	logFile *os.File
-	mu sync.Mutex
+	logFile     *os.File
+	mu          sync.Mutex
 }
 
 // This function will only be called once by the main server thread
@@ -57,7 +57,7 @@ func (w *WAL) ReBuild(store store.InMemStore) {
 			log.Fatal(err)
 		}
 		store.Set(key, value)
-	}	
+	}
 }
 
 func parseLine(line string) (operation, key, value string, err error) {

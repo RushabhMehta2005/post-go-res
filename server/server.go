@@ -57,7 +57,6 @@ func (s *Server) Start() {
 	}
 }
 
-
 func (s *Server) handleConnection(conn net.Conn) {
 	// No matter how we end up handling this connection, always close the connection and decrease number of clients
 	defer func() {
