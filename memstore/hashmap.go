@@ -11,7 +11,7 @@ type HashMap struct {
 
 func NewHashMap(initialSize int) *HashMap {
 	return &HashMap{
-		data: make(map[string]string, 32),
+		data: make(map[string]string, initialSize),
 	}
 }
 
