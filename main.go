@@ -10,7 +10,6 @@ import (
 // TODO: Implement new improved open-addressed hash table, maybe?
 // TODO: Add cmd line flags to set port, wal file location, hashmap initial size, etc params
 // TODO: Add compaction to WAL
-// TODO: Improve responses to client
 
 func main() {
 	// In memory map to store the actual key-value pair data

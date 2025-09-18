@@ -33,12 +33,14 @@ func NewWAL(logFilePath string) (*WAL, error) {
 }
 
 func (w *WAL) Log(entry LogEntry) {
-	// Make appending to log file thread safe
-	w.mu.Lock()
-	defer w.mu.Unlock()
 	// Convert the log to a slice of bytes
 	logEntryBytes := entry.ToBytes()
 	w.logFile.Write(logEntryBytes)
+
+	// Make appending to log file thread safe
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	// Flush the log to disk to ensure durability, this is disk IO and it is expensive
 	if err := w.logFile.Sync(); err != nil {
 		panic(err)
