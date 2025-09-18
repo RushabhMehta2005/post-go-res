@@ -96,7 +96,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		case "GET":
 			response = s.handleGet(args)
 		default:
-			response = "INVALID COMMAND\n"
+			response = "-INVALID COMMAND\n"
 		}
 
 		writer.WriteString(response)
@@ -110,22 +110,22 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 func (s *Server) handleSet(args []string) string {
 	if len(args) != 2 {
-		return "SET NOT OK: Expected 2 arguments KEY and VALUE\n"
+		return "-SET expected 2 arguments KEY and VALUE\n"
 	}
 	key, value := args[0], args[1]
 	s.walHandler.Log("SET", key, value)
 	s.kvstore.Set(key, value)
-	return "SET OK: Wrote value of " + key + " as " + value + "\n"
+	return "+OK\n"
 }
 
 func (s *Server) handleGet(args []string) string {
 	if len(args) != 1 {
-		return "GET NOT OK: Expected 1 argument KEY\n"
+		return "-GET expected 1 argument KEY\n"
 	}
 	key := args[0]
 	value, ok := s.kvstore.Get(key)
 	if !ok {
-		return "GET NOT OK: Could not find " + key + " in store\n"
+		return "-GET could not find " + key + " in store\n"
 	}
-	return "GET OK: Got value of " + key + " as " + value + "\n"
+	return "+OK " + value + "\n"
 }
