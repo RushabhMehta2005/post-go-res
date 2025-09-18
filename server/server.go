@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/RushabhMehta2005/post-go-res/memstore"
@@ -15,15 +16,15 @@ type Server struct {
 	kvstore           store.InMemStore    // Actual in memory store
 	walHandler        *wal.WAL            // Write Ahead Logger
 	concurrentClients utils.AtomicCounter // The number of clients connected right now
-	port              string              // The default port on which our application will run
+	port              int                 // The port on which our application will run
 }
 
-func NewServer(kvstore store.InMemStore, walHandler *wal.WAL) *Server {
+func NewServer(kvstore store.InMemStore, walHandler *wal.WAL, port int) *Server {
 	return &Server{
 		kvstore:           kvstore,
 		walHandler:        walHandler,
 		concurrentClients: utils.AtomicCounter{},
-		port:              "4242",
+		port:              port,
 	}
 }
 
@@ -34,7 +35,7 @@ func (s *Server) Start() {
 	s.walHandler.ReBuild(s.kvstore)
 
 	// Listen for tcp connections on the port
-	listener, err := net.Listen("tcp", ":"+s.port)
+	listener, err := net.Listen("tcp", ":"+strconv.Itoa(s.port))
 
 	if err != nil {
 		log.Fatal("Could not listen on port", s.port)

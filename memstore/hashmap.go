@@ -9,10 +9,7 @@ type HashMap struct {
 	data    map[string]string
 }
 
-// "Constructor" function to return new instance of HashMap
-// Currently the initial size is fixed to 32
-// TODO: Make this configurable through cmd line flag
-func NewHashMap() *HashMap {
+func NewHashMap(initialSize int) *HashMap {
 	return &HashMap{
 		data: make(map[string]string, 32),
 	}
