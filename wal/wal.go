@@ -32,12 +32,12 @@ func NewWAL(logFilePath string) (*WAL, error) {
 	return w, err
 }
 
-func (w *WAL) Log(operation, key, value string) {
+func (w *WAL) Log(entry LogEntry) {
 	// Make appending to log file thread safe
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	logEntry := strconv.Itoa(len(operation)) + operation + strconv.Itoa(len(key)) + key + strconv.Itoa(len(value)) + value + "\n"
-	logEntryBytes := []byte(logEntry)
+	// Convert the log to a slice of bytes
+	logEntryBytes := entry.ToBytes()
 	w.logFile.Write(logEntryBytes)
 	// Flush the log to disk to ensure durability, this is disk IO and it is expensive
 	if err := w.logFile.Sync(); err != nil {
@@ -51,12 +51,17 @@ func (w *WAL) ReBuild(store store.InMemStore) {
 	// Iterate through the lines
 	for scanner.Scan() {
 		line := scanner.Text()
-		// operation does not matter for now
-		_, key, value, err := parseLine(line)
+		operation, key, value, err := parseLine(line)
 		if err != nil {
 			log.Fatal(err)
 		}
-		store.Set(key, value)
+
+		switch operation {
+		case "SET":
+			store.Set(key, value)
+		case "DEL":
+			store.Delete(key)
+		}
 	}
 }
 

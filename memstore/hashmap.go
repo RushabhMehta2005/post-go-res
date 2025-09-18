@@ -33,3 +33,10 @@ func (s *HashMap) Set(key, value string) {
 	defer s.rwMutex.Unlock()
 	s.data[key] = value
 }
+
+// Delete key from map
+func (s *HashMap) Delete(key string) {
+	s.rwMutex.Lock()
+	defer s.rwMutex.Unlock()
+	delete(s.data, key)
+}

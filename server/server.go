@@ -95,6 +95,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 			response = s.handleSet(args)
 		case "GET":
 			response = s.handleGet(args)
+		case "DEL":
+			response = s.handleDel(args)
 		default:
 			response = "-INVALID COMMAND\n"
 		}
@@ -113,7 +115,8 @@ func (s *Server) handleSet(args []string) string {
 		return "-SET expected 2 arguments KEY and VALUE\n"
 	}
 	key, value := args[0], args[1]
-	s.walHandler.Log("SET", key, value)
+	logEntry := wal.NewSetEntry(&key, &value)
+	s.walHandler.Log(logEntry)
 	s.kvstore.Set(key, value)
 	return "+OK\n"
 }
@@ -128,4 +131,15 @@ func (s *Server) handleGet(args []string) string {
 		return "-GET could not find " + key + " in store\n"
 	}
 	return "+OK " + value + "\n"
+}
+
+func (s *Server) handleDel(args []string) string {
+	if len(args) != 1 {
+		return "-DEL expected 1 argument KEY\n"
+	}
+	key := args[0]
+	logEntry := wal.NewDelEntry(&key)
+	s.walHandler.Log(logEntry)
+	s.kvstore.Delete(key)
+	return "+OK\n"
 }
