@@ -4,7 +4,7 @@ A **minimal, educational key-value database** written in Go.
 Think of it as a super lightweight, in-memory **"Redis-like"** store with a **write-ahead log (WAL)** for durability.
 
 This project is primarily for learning purposes — it demonstrates:
-- Concurrency-safe in-memory storage using Go maps (`HashMap` & `ShardedMap`)
+- Concurrency-safe in-memory storage using custom data structures (`HashMap` & `ShardedMap`)
 - TCP server that accepts multiple concurrent clients
 - A simple text-based protocol (`SET`, `GET`, `DEL`)
 - Write-Ahead Logging (WAL) for crash recovery
