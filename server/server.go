@@ -12,6 +12,17 @@ import (
 	"github.com/RushabhMehta2005/post-go-res/wal"
 )
 
+// Server implements a simple TCP-based key-value server.
+//
+// The server speaks a tiny text protocol with three commands:
+//   - SET <key> <value>\n   -> stores the value and replies "+OK\n"
+//   - GET <key>\n         -> returns "+OK <value>\n" or an error "-GET could not find <key> in store\n"
+//   - DEL <key>\n         -> deletes the key and replies "+OK\n"
+//
+// The server writes every mutation (SET/DEL) to a write-ahead-log (WAL) before applying
+// it to the in-memory store. On startup the WAL is replayed to rebuild the in-memory state.
+//
+// Server is safe for concurrent clients: each incoming connection is handled in its own goroutine.
 type Server struct {
 	kvstore           store.InMemStore    // Actual in memory store
 	walHandler        *wal.WAL            // Write Ahead Logger
@@ -19,6 +30,12 @@ type Server struct {
 	port              int                 // The port on which our application will run
 }
 
+// NewServer constructs a new Server.
+//
+// Parameters:
+//   - kvstore: implementation of store.InMemStore to use for in-memory data (e.g., HashMap or ShardedMap).
+//   - walHandler: WAL instance used for durable logging of mutations.
+//   - port: TCP port to listen on
 func NewServer(kvstore store.InMemStore, walHandler *wal.WAL, port int) *Server {
 	return &Server{
 		kvstore:           kvstore,
@@ -28,6 +45,13 @@ func NewServer(kvstore store.InMemStore, walHandler *wal.WAL, port int) *Server 
 	}
 }
 
+// Start begins listening on the configured TCP port and accepts incoming client connections.
+//
+// On startup Start will replay the WAL to rebuild the in-memory store, then it will accept
+// connections in a loop. Each accepted connection is handled in a separate goroutine by
+// handleConnection.
+//
+// This method blocks until the listener fails (fatal) or the process exits.
 func (s *Server) Start() {
 	log.Println("Starting post-go-res ...")
 
@@ -58,6 +82,7 @@ func (s *Server) Start() {
 	}
 }
 
+// handleConnection runs the request loop for a single client connection.
 func (s *Server) handleConnection(conn net.Conn) {
 	// No matter how we end up handling this connection, always close the connection and decrease number of clients
 	defer func() {
@@ -91,6 +116,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 		var response string
 
+		// Dispatch to the handler for the given command. Handlers return the full
+		// text response (including trailing newline) to write back to the client.
 		switch command {
 		case "SET":
 			response = s.handleSet(args)
@@ -102,15 +129,21 @@ func (s *Server) handleConnection(conn net.Conn) {
 			response = "-INVALID COMMAND\n"
 		}
 
+		// Send response to client.
 		writer.WriteString(response)
 		err := writer.Flush()
 		if err != nil {
 			log.Println("Could not flush data to client:", conn.RemoteAddr())
 		}
 	}
-
+	// scanner.Scan loop ends when the client closes the connection or an error occurs.
 }
 
+// handleSet processes the SET command arguments.
+//
+// Expected args: [key, value].
+// The mutation is first appended to the WAL, then applied to the in-memory store.
+// Returns a single-line response string (with trailing newline) to send to the client.
 func (s *Server) handleSet(args []string) string {
 	if len(args) != 2 {
 		return "-SET expected 2 arguments KEY and VALUE\n"
@@ -122,6 +155,10 @@ func (s *Server) handleSet(args []string) string {
 	return "+OK\n"
 }
 
+// handleGet processes the GET command arguments.
+//
+// Expected args: [key].
+// Returns "+OK <value>\n" if the key exists, otherwise an error line indicating the key was not found.
 func (s *Server) handleGet(args []string) string {
 	if len(args) != 1 {
 		return "-GET expected 1 argument KEY\n"
@@ -134,6 +171,10 @@ func (s *Server) handleGet(args []string) string {
 	return "+OK " + value + "\n"
 }
 
+// handleDel processes the DEL command arguments.
+//
+// Expected args: [key].
+// The deletion is logged to the WAL before being applied to the in-memory store.
 func (s *Server) handleDel(args []string) string {
 	if len(args) != 1 {
 		return "-DEL expected 1 argument KEY\n"

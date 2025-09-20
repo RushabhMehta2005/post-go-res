@@ -14,8 +14,24 @@ import (
 // TODO: Add compaction to WAL
 // TODO: Write README.md
 
+
+// main is the program entry point.
+//
+// This program starts a simple TCP key-value server backed by an in-memory
+// store and a write-ahead log (WAL) for durability. The server supports a
+// tiny text protocol with SET/GET/DEL commands.
+//
+// Command-line flags:
+//   -port   : TCP port to listen on (default 4242)
+//   -size   : initial capacity hint for non-sharded HashMap (default 64)
+//   -wal    : path to the WAL file (default "./wal_files/wal_file")
+//   -shards : number of shards to use for the in-memory store (default 8)
+//
+// Notes:
+// - If shards == 1 a single HashMap is used; otherwise a ShardedMap is created.
+// - The WAL is replayed at server startup to rebuild the in-memory state.
 func main() {
-	// Deal with command-line flags
+	// Parse command-line flags
 	port := flag.Int("port", 4242, "Port for the database server")
 	initialSize := flag.Int("size", 64, "Initial number of key-value pairs ")
 	walPath := flag.String("wal", "./wal_files/wal_file", "Path to the WAL file")
@@ -23,6 +39,7 @@ func main() {
 
 	flag.Parse()
 
+	// Validate flags
 	if *port <= 0 || *port > 65535 {
 		log.Fatalf("Invalid port: %d. Must be between 1 and 65535.", *port)
 	}
@@ -35,8 +52,7 @@ func main() {
 		log.Fatalf("Invalid shard count: %d. Must be positive.", *numShards)
 	}
 
-	// In-memory structures to store the actual key-value pair data
-
+	// Choose an in-memory store implementation based on shard count.
 	var kvstore store.InMemStore
 	if *numShards == 1 {
 		kvstore = store.NewHashMap(*initialSize)
@@ -47,6 +63,7 @@ func main() {
 	// Instance of WAL
 	var walHandler, _ = wal.NewWAL(*walPath)
 
+	// Construct and start the server (blocking call)
 	server := server.NewServer(kvstore, walHandler, *port)
 	server.Start()
 }

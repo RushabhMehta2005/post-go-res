@@ -2,10 +2,17 @@ package wal
 
 import "strconv"
 
+// LogEntry is the interface implemented by WAL entries.
+// Implementations must provide a ToBytes method that returns the
+// length-prefixed textual representation appended to the WAL file.
 type LogEntry interface {
 	ToBytes() []byte
 }
 
+
+// SetEntry represents a SET operation in the WAL.
+// The serialized form is:
+//   <len("SET")>"SET"<len(key)><key><len(value)><value>\n
 type SetEntry struct {
 	operation string
 	key       *string
@@ -28,6 +35,7 @@ func (e *SetEntry) ToBytes() []byte {
 	return logEntryBytes
 }
 
+// DelEntry represents a DEL operation in the WAL.
 type DelEntry struct {
 	operation string
 	key       *string

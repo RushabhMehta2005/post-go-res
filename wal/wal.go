@@ -14,15 +14,20 @@ import (
 
 // TODO: Improve error handling here, decide who should handle the error and where
 
-// This file contains the internal implementation
-// of the Write-Ahead Logging API
-
+// WAL implements a simple write-ahead log stored in a file.
+//
+// Each mutation (SET/DEL) should be appended to the WAL before being
+// applied to the in-memory store. On startup the WAL can be replayed
+// to rebuild the in-memory store by calling ReBuild.
+//
+// WAL provides basic concurrency protection for appending log entries.
 type WAL struct {
 	logFilePath string
 	logFile     *os.File
 	mu          sync.Mutex
 }
 
+// NewWAL opens (or creates) the WAL file at logFilePath and returns a WAL.
 // This function will only be called once by the main server thread
 func NewWAL(logFilePath string) (*WAL, error) {
 	w := new(WAL)
@@ -32,6 +37,10 @@ func NewWAL(logFilePath string) (*WAL, error) {
 	return w, err
 }
 
+// Log appends the provided LogEntry to the WAL and flushes it to stable storage.
+//
+// Log is safe for concurrent callers: it serializes append+sync operations
+// with an internal mutex to ensure entries are written and persisted in order.
 func (w *WAL) Log(entry LogEntry) {
 	// Convert the log to a slice of bytes
 	logEntryBytes := entry.ToBytes()
@@ -47,6 +56,7 @@ func (w *WAL) Log(entry LogEntry) {
 	}
 }
 
+// ReBuild replays the WAL and applies each logged mutation to the provided store.
 func (w *WAL) ReBuild(store store.InMemStore) {
 	scanner := bufio.NewScanner(w.logFile)
 
@@ -67,6 +77,12 @@ func (w *WAL) ReBuild(store store.InMemStore) {
 	}
 }
 
+// parseLine parses a single WAL line into operation, key and value.
+//
+// The WAL format expected by parseLine is a sequence of three length-prefixed fields:
+//   <opLen><opBytes><keyLen><keyBytes><valueLen><valueBytes>
+// where each length is ASCII digits (e.g. "3SET5hello4data") and the parser reads
+// the number, then consumes exactly that many bytes for the field.
 func parseLine(line string) (operation, key, value string, err error) {
 	readLen := func(s string, i *int) (int, error) {
 		start := *i

@@ -2,12 +2,16 @@ package store
 
 import "sync"
 
+// ShardedMap is a concurrent, sharded key-value store.
+// It splits keys into multiple independent shards to reduce
+// lock contention under heavy concurrent access.
 type ShardedMap struct {
-	shardLocks []sync.RWMutex
-	shardData  []map[string]string
-	mapper     Mapper
+	shardLocks []sync.RWMutex // one RWMutex per shard
+	shardData  []map[string]string // one map per shard
+	mapper     Mapper // maps keys to shard indices
 }
 
+// NewShardedMap creates a new ShardedMap with numShards shards.
 func NewShardedMap(numShards int, mapping MapToN) *ShardedMap {
 	sm := &ShardedMap{
 		shardLocks: make([]sync.RWMutex, numShards),
@@ -21,6 +25,7 @@ func NewShardedMap(numShards int, mapping MapToN) *ShardedMap {
 	return sm
 }
 
+// Get retrieves the value for the given key.
 func (sm *ShardedMap) Get(key string) (string, bool) {
 	shardIndex := sm.mapper.GetMapping(key)
 	sm.shardLocks[shardIndex].RLock()
@@ -29,6 +34,7 @@ func (sm *ShardedMap) Get(key string) (string, bool) {
 	return value, found
 }
 
+// Set sets the value for the given key.
 func (sm *ShardedMap) Set(key, value string) {
 	shardIndex := sm.mapper.GetMapping(key)
 	sm.shardLocks[shardIndex].Lock()
@@ -36,6 +42,7 @@ func (sm *ShardedMap) Set(key, value string) {
 	sm.shardData[shardIndex][key] = value
 }
 
+// Delete removes the given key from the map.
 func (sm *ShardedMap) Delete(key string) {
 	shardIndex := sm.mapper.GetMapping(key)
 	sm.shardLocks[shardIndex].Lock()

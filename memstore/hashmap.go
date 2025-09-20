@@ -2,11 +2,12 @@ package store
 
 import "sync"
 
-// The 'HashMap' struct implements a thread safe in memory store using
-// the map data structure in Go
+// HashMap is a simple, thread-safe in-memory key-value store.
+// HashMap is best suited for smaller maps or low-contention workloads.
+// For high-concurrency scenarios, consider using ShardedMap.
 type HashMap struct {
-	mu   sync.RWMutex
-	data map[string]string
+	mu   sync.RWMutex // read/write mutex to guard access to data
+	data map[string]string // underlying key-value store
 }
 
 func NewHashMap(initialSize int) *HashMap {
