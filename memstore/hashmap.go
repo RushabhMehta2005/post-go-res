@@ -5,8 +5,8 @@ import "sync"
 // The 'HashMap' struct implements a thread safe in memory store using
 // the map data structure in Go
 type HashMap struct {
-	mu sync.RWMutex
-	data    map[string]string
+	mu   sync.RWMutex
+	data map[string]string
 }
 
 func NewHashMap(initialSize int) *HashMap {
