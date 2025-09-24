@@ -12,7 +12,6 @@ import (
 // TODO: Write client library code to interact with our db, multiple programming languages
 // TODO: Implement new improved open-addressed hash table, maybe?
 // TODO: Add compaction to WAL
-// TODO: Write README.md
 
 
 // main is the program entry point.
