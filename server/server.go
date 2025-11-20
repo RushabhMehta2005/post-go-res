@@ -25,7 +25,7 @@ import (
 // Server is safe for concurrent clients: each incoming connection is handled in its own goroutine.
 type Server struct {
 	kvstore           store.InMemStore    // Actual in memory store
-	walHandler        *wal.WAL            // Write Ahead Logger
+	walHandler        wal.WAL             // Write Ahead Logger
 	concurrentClients utils.AtomicCounter // The number of clients connected right now
 	port              int                 // The port on which our application will run
 }
@@ -36,7 +36,7 @@ type Server struct {
 //   - kvstore: implementation of store.InMemStore to use for in-memory data (e.g., HashMap or ShardedMap).
 //   - walHandler: WAL instance used for durable logging of mutations.
 //   - port: TCP port to listen on
-func NewServer(kvstore store.InMemStore, walHandler *wal.WAL, port int) *Server {
+func NewServer(kvstore store.InMemStore, walHandler wal.WAL, port int) *Server {
 	return &Server{
 		kvstore:           kvstore,
 		walHandler:        walHandler,
