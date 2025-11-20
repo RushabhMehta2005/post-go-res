@@ -36,8 +36,7 @@ func main() {
 	initialSize := flag.Int("size", 64, "Initial number of key-value pairs ")
 	walPath := flag.String("wal", "./wal_files/wal_file", "Path to the WAL file")
 	numShards := flag.Int("shards", 8, "The number of in-memory maps")
-	// TODO: Decide on a command line flag param to set persistenceMode boolean
-	// persistenceMode := true
+	persistenceMode := flag.Bool("persist", true, "Enable persistent database mode")
 
 	flag.Parse()
 
@@ -63,7 +62,12 @@ func main() {
 	}
 
 	// Instance of WAL
-	var walHandler, _ = wal.NewFileWAL(*walPath)
+	var walHandler wal.WAL
+	if *persistenceMode {
+		walHandler, _ = wal.NewFileWAL(*walPath)
+	} else {
+		walHandler, _ = wal.NewNoOpWAL()
+	}
 
 	// Construct and start the server (blocking call)
 	server := server.NewServer(kvstore, walHandler, *port)
