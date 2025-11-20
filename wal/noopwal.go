@@ -2,7 +2,7 @@ package wal
 
 import "github.com/RushabhMehta2005/post-go-res/memstore"
 
-
+// This implementation is used when the persist flag is set to false
 type NoOpWAL struct {}
 
 func NewNoOpWAL() (*NoOpWAL, error) {

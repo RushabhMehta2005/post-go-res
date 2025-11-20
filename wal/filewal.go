@@ -14,20 +14,20 @@ import (
 
 // TODO: Improve error handling here, decide who should handle the error and where
 
-// WAL implements a simple write-ahead log stored in a file.
+// FileWAL implements a simple write-ahead log stored in a file.
 //
 // Each mutation (SET/DEL) should be appended to the WAL before being
 // applied to the in-memory store. On startup the WAL can be replayed
 // to rebuild the in-memory store by calling ReBuild.
 //
-// WAL provides basic concurrency protection for appending log entries.
+// FileWAL provides basic concurrency protection for appending log entries.
 type FileWAL struct {
 	logFilePath string
 	logFile     *os.File
 	mu          sync.Mutex
 }
 
-// NewWAL opens (or creates) the WAL file at logFilePath and returns a WAL.
+// NewFileWAL opens (or creates) the WAL file at logFilePath and returns a WAL.
 // This function will only be called once by the main server thread
 func NewFileWAL(logFilePath string) (*FileWAL, error) {
 	w := new(FileWAL)
