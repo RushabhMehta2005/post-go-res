@@ -7,8 +7,7 @@ type NoOpWAL struct {}
 
 func NewNoOpWAL() (*NoOpWAL, error) {
 	w := new(NoOpWAL)
-	var err error
-	return w, err
+	return w, nil
 }
 
 func (w *NoOpWAL) Log(entry LogEntry) error {
